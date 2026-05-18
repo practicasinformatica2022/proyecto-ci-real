@@ -1,7 +1,6 @@
 pipeline {
     agent any
     
-    // Le decimos a Jenkins que use la herramienta que configuramos en la Fase 2
     tools {
         nodejs 'node18'
     }
@@ -10,41 +9,36 @@ pipeline {
         stage('Descargar Código') {
             steps {
                 echo 'Descargando desde GitHub...'
-                // Al conectarlo via SCM, Jenkins hace el git clone automáticamente.
             }
         }
 
         stage('Instalar Dependencias') {
             steps {
-                echo 'Instalando librerías necesarias (npm install)...'
-                // 'sh' sirve para ejecutar comandos reales en la terminal de Linux
                 sh 'npm install'
             }
         }
 
-        stage('Ejecutar Pruebas (Tests)') {
+        stage('Ejecutar Pruebas') {
             steps {
-                echo 'Corriendo pruebas automáticas...'
                 sh 'npm test'
             }
         }
 
-        stage('Empaquetar') {
+        // --- ¡AQUÍ EMPIEZA LO NUEVO (CD)! ---
+        stage('Despliegue a Producción (GitHub Pages)') {
             steps {
-                echo 'Comprimiendo la aplicación para enviarla al servidor...'
-                // Creamos un archivo zip/tar con nuestro código
-                sh 'tar -cvf aplicacion.tar math.js package.json'
+                echo 'Preparando el despliegue a la web...'
+                
+                // Extraemos el secreto de la bóveda de Jenkins
+                withCredentials([string(credentialsId: 'token-github', variable: 'GITHUB_TOKEN')]) {
+                    // Empujamos el código a una rama especial de GitHub llamada "gh-pages"
+                    sh '''
+                        # Cambia TU_USUARIO por tu usuario real de GitHub (ej. practicasinformatica2022)
+                        git push https://${GITHUB_TOKEN}@github.com/practicasinformatica2022/proyecto-ci-real.git HEAD:refs/heads/gh-pages --force
+                    '''
+                }
             }
         }
     }
-
-    // El bloque POST se ejecuta SIEMPRE al final, pase lo que pase
-    post {
-        success {
-            echo '✅ ¡ÉXITO! El código pasó las pruebas y está empaquetado.'
-        }
-        failure {
-            echo '❌ ¡ALERTA ROJA! Las pruebas fallaron. El empaquetado se ha cancelado.'
-        }
-    }
 }
+
