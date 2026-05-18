@@ -3,7 +3,7 @@ pipeline {
     
     // Le decimos a Jenkins que use la herramienta que configuramos en la Fase 2
     tools {
-        nodejs 'node26'
+        nodejs 'node18'
     }
 
     stages {
